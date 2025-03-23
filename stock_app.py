@@ -17,22 +17,23 @@ if stock_symbol:
     data['MA20'] = data['Close'].rolling(window=20).mean()
     data['MA50'] = data['Close'].rolling(window=50).mean()
 
-    # 🧮 RSI 計算（先計算 RSI 數值）
+# 🧮 RSI 計算（先計算 RSI 數值）
     close_price = data['Close']
-    if isinstance(close_price, pd.DataFrame):
-        close_price = close_price.iloc[:, 0]
-    data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
+if isinstance(close_price, pd.DataFrame):
+    close_price = close_price.iloc[:, 0]
+data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
 
-    # 📈 RSI 圖表區塊
-    st.subheader(f"📉 {stock_symbol} RSI 指標圖表")
-    fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
-    ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
-    ax_rsi.axhline(70, color='red', linestyle='--', label='Overbought (70)')
-    ax_rsi.axhline(30, color='green', linestyle='--', label='Oversold (30)')
-    ax_rsi.set_title(f"{stock_symbol} RSI Indicator")
-    ax_rsi.set_ylabel("RSI")
-    ax_rsi.legend()
-    st.pyplot(fig_rsi)
+# 📈 RSI 圖表區塊
+st.subheader(f"📉 {stock_symbol} RSI 指標圖表")
+fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
+ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
+ax_rsi.axhline(70, color='red', linestyle='--', label='Overbought (70)')
+ax_rsi.axhline(30, color='green', linestyle='--', label='Oversold (30)')
+ax_rsi.set_title(f"{stock_symbol} RSI Indicator")
+ax_rsi.set_ylabel("RSI")
+ax_rsi.legend()
+st.pyplot(fig_rsi)
+
 
     # MA 買入賣出訊號
     data['Signal'] = 0
@@ -82,7 +83,10 @@ if stock_symbol:
     else:
         st.info("暫時未出現明顯買賣訊號")
 
-    st.subheader("🎯 預測誤差 MSE")
+    st.subheader("📈 AI 預測結果")
+st.write(f"預測下一個交易日收盤價：${next_day_prediction:.2f}")
+
+st.subheader("🎯 預測誤差 MSE")
     st.write(f"MSE（預測誤差）: {round(mse, 4)}")
 
 # 🔍 Golden Cross 股票掃描功能
