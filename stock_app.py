@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import streamlit as st
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
-import pandas_ta as ta
+import ta
 
 st.set_page_config(page_title="📈 AI 股票分析工具", layout="wide")
 st.title("📊 股票走勢分析工具")
@@ -15,7 +15,7 @@ if stock_symbol:
     data = yf.download(stock_symbol, period="1y", interval="1d")
     data['MA20'] = data['Close'].rolling(window=20).mean()
     data['MA50'] = data['Close'].rolling(window=50).mean()
-    data['RSI'] = ta.momentum.RSIIndicator(data['Close']).rsi()
+    data['RSI'] = ta.momentum.RSIIndicator(close=data['Close'], window=14).rsi()
     macd = ta.trend.MACD(data['Close'])
     data['MACD'] = macd.macd()
     data['MACD_signal'] = macd.signal()
