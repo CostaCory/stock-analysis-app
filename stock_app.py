@@ -40,7 +40,7 @@ if stock_symbol:
     data.loc[data['MA20'] > data['MA50'], 'Signal'] = 1
     data.loc[data['MA20'] < data['MA50'], 'Signal'] = -1
 
-    # 預測下一日收盤價
+    # 預測下一日收盤價準備：將今天的收盤價作為基礎，並建立預測欄位
     data['Prediction'] = data['Close'].shift(-1)
     data.dropna(inplace=True)
 
@@ -56,6 +56,13 @@ if stock_symbol:
     predictions = model.predict(X_test)
 
     mse = mean_squared_error(y_test, predictions)
+
+    # 預測下一日收盤價（以最後一天的收盤價作為基礎）
+    last_close = data['Close'].iloc[-1]
+    next_day_prediction = model.predict(np.array([[last_close]]))[0]
+
+    st.subheader("📈 預測結果")
+    st.metric(label="預測明日收盤價", value=f"{next_day_prediction:.2f}")
 
     st.subheader(f"{stock_symbol} 最近一年數據")
     st.dataframe(data.tail(5))
