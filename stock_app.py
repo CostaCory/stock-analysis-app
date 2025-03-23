@@ -1,3 +1,4 @@
+import pandas_ta as ta
 import streamlit as st
 import yfinance as yf
 import matplotlib.pyplot as plt
@@ -79,3 +80,20 @@ predicted_price = model.predict(last_close_price)[0]
 
 # 顯示預測結果
 st.markdown(f"#### 預測 {stock_symbol} 下一個交易日嘅收盤價為： **{predicted_price:.2f} USD** 🚀")
+
+# ➕ 新增 RSI 技術指標區塊
+st.subheader(f"{stock_symbol} RSI 技術指標")
+
+# 計算 RSI（預設為 14 日）
+data["RSI"] = ta.rsi(data["Close"], length=14)
+
+# 畫 RSI 圖表
+fig, ax = plt.subplots()
+ax.plot(data.index, data["RSI"], label="RSI (14)", color="purple")
+ax.axhline(70, linestyle='--', color='red', label="Overbought (70)")
+ax.axhline(30, linestyle='--', color='green', label="Oversold (30)")
+ax.set_ylabel("RSI")
+ax.set_xlabel("Date")
+ax.set_title(f"{stock_symbol} RSI Indicator")
+ax.legend()
+st.pyplot(fig)
