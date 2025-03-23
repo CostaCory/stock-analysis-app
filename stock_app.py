@@ -7,24 +7,32 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 import ta
 
+# 設定 Streamlit 頁面標題與圖示
 st.set_page_config(page_title="股票走勢分析工具", page_icon="📈")
 
+# 主標題
 st.title("📊 股票走勢分析工具")
+
+# 讓使用者輸入想查詢的股票代號，預設為 "TSLA"
 stock_symbol = st.text_input("請輸入股票代號（例如：AAPL, TSLA, GOOG）", value="TSLA")
 
+# 只有在使用者輸入了股票代號時才執行以下邏輯
 if stock_symbol:
-    # 下載股票資料與計算移動平均線
+    # 下載該股票最近一年的資料（日線）
     data = yf.download(stock_symbol, period="1y", interval="1d")
+
+    # 計算 20 日與 50 日移動平均線
     data['MA20'] = data['Close'].rolling(window=20).mean()
     data['MA50'] = data['Close'].rolling(window=50).mean()
 
-    # 🧮 RSI 計算（先計算 RSI 數值）
+    # 計算 RSI 指標
     close_price = data['Close']
+    # 若 close_price 是 DataFrame（很少見，但做個保險判斷）
     if isinstance(close_price, pd.DataFrame):
         close_price = close_price.iloc[:, 0]
     data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
 
-    # 📈 RSI 圖表區塊
+    # RSI 圖表區塊
     st.subheader(f"📉 {stock_symbol} RSI 指標圖表")
     fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
     ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
@@ -40,33 +48,41 @@ if stock_symbol:
     data.loc[data['MA20'] > data['MA50'], 'Signal'] = 1
     data.loc[data['MA20'] < data['MA50'], 'Signal'] = -1
 
-    # 預測下一日收盤價準備：將今天的收盤價作為基礎，並建立預測欄位
+    # 建立預測欄位：把明日收盤價往上移一格
     data['Prediction'] = data['Close'].shift(-1)
+
+    # 移除空值
     data.dropna(inplace=True)
 
+    # 準備訓練資料
     X = np.array(data['Close']).reshape(-1, 1)
     y = np.array(data['Prediction'])
 
-    split = int(len(X) * 0.8)
+    split = int(len(X) * 0.8)  # 80% 當作訓練資料，20% 當作測試資料
     X_train, X_test = X[:split], X[split:]
     y_train, y_test = y[:split], y[split:]
 
-    model = RandomForestRegressor(n_estimators=100)
+    # 建立並訓練隨機森林模型
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
     model.fit(X_train, y_train)
-    predictions = model.predict(X_test)
 
+    # 預測測試集
+    predictions = model.predict(X_test)
     mse = mean_squared_error(y_test, predictions)
 
-    # 預測下一日收盤價（以最後一天的收盤價作為基礎）
+    # 預測下一日收盤價：以最後一天的收盤價做預測
     last_close = data['Close'].iloc[-1]
     next_day_prediction = model.predict(np.array([[last_close]]))[0]
 
+    # 顯示預測結果（下一日收盤價）
     st.subheader("📈 預測結果")
     st.metric(label="預測明日收盤價", value=f"{next_day_prediction:.2f}")
 
-    st.subheader(f"{stock_symbol} 最近一年數據")
+    # 顯示最近幾筆資料
+    st.subheader(f"{stock_symbol} 最近一年數據（最後 5 筆）")
     st.dataframe(data.tail(5))
 
+    # 畫出股票價格與 MA 走勢圖
     st.subheader(f"{stock_symbol} 股票價格走勢")
     fig, ax = plt.subplots()
     ax.plot(data.index, data['Close'], label='Close Price')
@@ -78,9 +94,11 @@ if stock_symbol:
     ax.legend()
     st.pyplot(fig)
 
+    # 顯示 RSI 最新數值
     st.subheader("📉 RSI 技術指標分析")
     st.write(f"RSI = {round(data['RSI'].iloc[-1], 2)}")
 
+    # 顯示 MA 買賣訊號
     st.subheader("📌 MA 買賣訊號")
     signal_value = data['Signal'].iloc[-1]
     if signal_value == 1:
@@ -90,11 +108,18 @@ if stock_symbol:
     else:
         st.info("暫時未出現明顯買賣訊號")
 
+    # 顯示預測誤差
     st.subheader("🎯 預測誤差 MSE")
     st.write(f"MSE（預測誤差）: {round(mse, 4)}")
 
-# 🔍 Golden Cross 股票掃描功能
+
+# ------------------------------------------------------------
+# 下面是 Golden Cross 股票掃描功能
 def scan_golden_cross_stocks():
+    """
+    掃描預先設定的股票清單，若出現 MA20 上穿 MA50 則視為 Golden Cross。
+    回傳出現 Golden Cross 的股票代號清單。
+    """
     import yfinance as yf
     import pandas as pd
 
@@ -107,19 +132,9 @@ def scan_golden_cross_stocks():
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['MA50'] = df['Close'].rolling(window=50).mean()
 
-            if df['MA20'].iloc[-1] > df['MA50'].iloc[-1] and df['MA20'].iloc[-2] <= df['MA50'].iloc[-2]:
+            # 檢查最後兩天 MA20 與 MA50 的相對關係
+            # 若 MA20 今天大於 MA50，且昨天小於等於 MA50，則判斷為 Golden Cross
+            if (df['MA20'].iloc[-1] > df['MA50'].iloc[-1]) and (df['MA20'].iloc[-2] <= df['MA50'].iloc[-2]):
                 golden_cross_stocks.append(symbol)
         except Exception as e:
-            print(f"Error checking {symbol}: {e}")
-
-    return golden_cross_stocks
-
-# 📈 Golden Cross 股票掃描
-st.subheader("📈 Golden Cross 股票掃描")
-with st.spinner("掃描中，請稍候..."):
-    gc_stocks = scan_golden_cross_stocks()
-if gc_stocks:
-    st.success("✅ 出現 Golden Cross 訊號的股票：")
-    st.table(gc_stocks)
-else:
-    st.warning("暫時未發現 Golden Cross 股票")
+            print(f"Error checking {symbol}: {
