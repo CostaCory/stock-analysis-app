@@ -109,11 +109,13 @@ else:
 try:
     last_close = data['Close'].iloc[-1]
 
-    # 檢查是否 NaN 或非數值
+    # 嘗試轉為單一值（scalar）
+    if isinstance(last_close, pd.Series):
+        last_close = last_close.item()
+
     if pd.isna(last_close):
         st.warning("⚠️ 無法預測下一日收盤價（收盤價為空值或無效）")
     else:
-        # 預測下一日收盤價（注意輸入 shape 應為 (1, 1)）
         next_day_prediction = model.predict(np.array([[last_close]]))[0]
         st.subheader("🔮 AI 預測下一日收盤價")
         st.write(f"預測下一交易日收盤價：${round(next_day_prediction, 2)}")
