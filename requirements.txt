@@ -4,5 +4,4 @@ numpy
 pandas
 matplotlib
 scikit-learn
-pandas_ta
-setuptools
+ta
