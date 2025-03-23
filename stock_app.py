@@ -1,4 +1,4 @@
-import pandas_ta as ta
+import ta
 import streamlit as st
 import yfinance as yf
 import matplotlib.pyplot as plt
@@ -85,7 +85,8 @@ st.markdown(f"#### 預測 {stock_symbol} 下一個交易日嘅收盤價為： **
 st.subheader(f"{stock_symbol} RSI 技術指標")
 
 # 計算 RSI（預設為 14 日）
-data["RSI"] = ta.rsi(data["Close"], length=14)
+data['RSI'] = ta.momentum.RSIIndicator(data['Close']).rsi()
+
 
 # 畫 RSI 圖表
 fig, ax = plt.subplots()
