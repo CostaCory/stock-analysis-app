@@ -59,6 +59,16 @@ if stock_symbol:
     ax.legend()
     st.pyplot(fig)
 
+    # 📉 RSI 指標圖表
+    fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
+    ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
+    ax_rsi.axhline(70, color='red', linestyle='--', label='Overbought (70)')
+    ax_rsi.axhline(30, color='green', linestyle='--', label='Oversold (30)')
+    ax_rsi.set_title(f"{stock_symbol} RSI Indicator")
+    ax_rsi.set_ylabel("RSI")
+    ax_rsi.legend()
+    st.pyplot(fig_rsi)
+
     st.subheader("📉 RSI 技術指標分析")
     st.write(f"RSI = {round(data['RSI'].iloc[-1], 2)}")
 
