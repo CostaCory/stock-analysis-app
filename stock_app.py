@@ -27,7 +27,6 @@ if stock_symbol:
 
     # 計算 RSI 指標
     close_price = data['Close']
-    # 若 close_price 是 DataFrame（很少見，但做個保險判斷）
     if isinstance(close_price, pd.DataFrame):
         close_price = close_price.iloc[:, 0]
     data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
@@ -63,4 +62,91 @@ if stock_symbol:
     y_train, y_test = y[:split], y[split:]
 
     # 建立並訓練隨機森林模型
-    model = RandomForestRegressor(n_estimators=_
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    model.fit(X_train, y_train)
+
+    # 預測測試集
+    predictions = model.predict(X_test)
+    mse = mean_squared_error(y_test, predictions)
+
+    # 預測下一日收盤價：以最後一天的收盤價做預測
+    last_close = data['Close'].iloc[-1]
+    next_day_prediction = model.predict(np.array([[last_close]]))[0]
+
+    # 顯示預測結果（下一日收盤價）
+    st.subheader("📈 預測結果")
+    st.metric(label="預測明日收盤價", value=f"{next_day_prediction:.2f}")
+
+    # 顯示最近幾筆資料
+    st.subheader(f"{stock_symbol} 最近一年數據（最後 5 筆）")
+    st.dataframe(data.tail(5))
+
+    # 畫出股票價格與 MA 走勢圖
+    st.subheader(f"{stock_symbol} 股票價格走勢")
+    fig, ax = plt.subplots()
+    ax.plot(data.index, data['Close'], label='Close Price')
+    ax.plot(data.index, data['MA20'], label='20-day MA', linestyle='--')
+    ax.plot(data.index, data['MA50'], label='50-day MA', linestyle='-.')
+    ax.set_xlabel("Date")
+    ax.set_ylabel("Price (USD)")
+    ax.set_title(f"{stock_symbol} Stock Price with Moving Averages")
+    ax.legend()
+    st.pyplot(fig)
+
+    # 顯示 RSI 最新數值
+    st.subheader("📉 RSI 技術指標分析")
+    st.write(f"RSI = {round(data['RSI'].iloc[-1], 2)}")
+
+    # 顯示 MA 買賣訊號
+    st.subheader("📌 MA 買賣訊號")
+    signal_value = data['Signal'].iloc[-1]
+    if signal_value == 1:
+        st.success("出現買入訊號（黃金交叉）")
+    elif signal_value == -1:
+        st.error("出現賣出訊號（死亡交叉）")
+    else:
+        st.info("暫時未出現明顯買賣訊號")
+
+    # 顯示預測誤差
+    st.subheader("🎯 預測誤差 MSE")
+    st.write(f"MSE（預測誤差）: {round(mse, 4)}")
+
+
+# ------------------------------------------------------------
+# 下面是 Golden Cross 股票掃描功能
+def scan_golden_cross_stocks():
+    """
+    掃描預先設定的股票清單，若出現 MA20 上穿 MA50 則視為 Golden Cross。
+    回傳出現 Golden Cross 的股票代號清單。
+    """
+    import yfinance as yf
+    import pandas as pd
+
+    stock_list = ['AAPL', 'GOOG', 'META', 'AMZN', 'MSFT', 'TSLA', 'NVDA', 'NFLX', 'INTC', 'AMD']
+    golden_cross_stocks = []
+
+    for symbol in stock_list:
+        try:
+            df = yf.download(symbol, period="6mo", interval="1d")
+            df['MA20'] = df['Close'].rolling(window=20).mean()
+            df['MA50'] = df['Close'].rolling(window=50).mean()
+
+            # 檢查最後兩天 MA20 與 MA50 的相對關係
+            # 若 MA20 今天大於 MA50，且昨天小於等於 MA50，則判斷為 Golden Cross
+            if (df['MA20'].iloc[-1] > df['MA50'].iloc[-1]) and (df['MA20'].iloc[-2] <= df['MA50'].iloc[-2]):
+                golden_cross_stocks.append(symbol)
+        except Exception as e:
+            print(f"Error checking {symbol}: {e}")
+
+    return golden_cross_stocks
+
+# 顯示 Golden Cross 股票掃描結果
+st.subheader("📈 Golden Cross 股票掃描")
+with st.spinner("掃描中，請稍候..."):
+    gc_stocks = scan_golden_cross_stocks()
+
+if gc_stocks:
+    st.success("✅ 出現 Golden Cross 訊號的股票：")
+    st.table(gc_stocks)
+else:
+    st.warning("暫時未發現 Golden Cross 股票")
