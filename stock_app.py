@@ -18,7 +18,7 @@ if stock_symbol:
     data['MA50'] = data['Close'].rolling(window=50).mean()
 
 # 🧮 RSI 計算（先計算 RSI 數值）
-close_price = data['Close']
+    close_price = data['Close']
 if isinstance(close_price, pd.DataFrame):
     close_price = close_price.iloc[:, 0]
 data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
