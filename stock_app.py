@@ -108,9 +108,9 @@ else:
 # 預測下一日收盤價顯示（修正）
 try:
     last_close = data['Close'].iloc[-1]
-    next_day_prediction = model.predict(np.array([[last_close]]))[0]
+    next_day_prediction = model.predict(np.array([[last_close]]))
 
-    st.subheader("🔮 AI 預測下一日收盤價")
+ st.subheader("🔮 AI 預測下一日收盤價")
     st.write(f"預測下一交易日收盤價：${round(next_day_prediction, 2)}")
 except Exception as e:
     st.error("⚠️ 無法計算預測下一日收盤價。請確認資料是否完整。")
