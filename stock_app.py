@@ -1,4 +1,3 @@
-
 import streamlit as st
 import yfinance as yf
 import pandas as pd
@@ -49,18 +48,6 @@ if stock_symbol:
     st.subheader(f"{stock_symbol} 最近一年數據")
     st.dataframe(data.tail(5))
 
-    # RSI 圖表視覺化
-    st.subheader("📈 RSI 指標圖表")
-    fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
-    ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
-    ax_rsi.axhline(70, color='red', linestyle='--', label='Overbought (70)')
-    ax_rsi.axhline(30, color='green', linestyle='--', label='Oversold (30)')
-    ax_rsi.set_title(f"{stock_symbol} RSI Indicator")
-    ax_rsi.set_ylabel("RSI")
-    ax_rsi.legend()
-    st.pyplot(fig_rsi)
-
-
     st.subheader(f"{stock_symbol} 股票價格走勢")
     fig, ax = plt.subplots()
     ax.plot(data.index, data['Close'], label='Close Price')
@@ -86,3 +73,34 @@ if stock_symbol:
 
     st.subheader("🎯 預測誤差 MSE")
     st.write(f"MSE（預測誤差）: {round(mse, 4)}")
+
+# 🔍 Golden Cross 股票掃描功能
+def scan_golden_cross_stocks():
+    import yfinance as yf
+    import pandas as pd
+
+    stock_list = ['AAPL', 'GOOG', 'META', 'AMZN', 'MSFT', 'TSLA', 'NVDA', 'NFLX', 'INTC', 'AMD']
+    golden_cross_stocks = []
+
+    for symbol in stock_list:
+        try:
+            df = yf.download(symbol, period="6mo", interval="1d")
+            df['MA20'] = df['Close'].rolling(window=20).mean()
+            df['MA50'] = df['Close'].rolling(window=50).mean()
+
+            if df['MA20'].iloc[-1] > df['MA50'].iloc[-1] and df['MA20'].iloc[-2] <= df['MA50'].iloc[-2]:
+                golden_cross_stocks.append(symbol)
+        except Exception as e:
+            print(f"Error checking {symbol}: {e}")
+
+    return golden_cross_stocks
+
+# 📈 Golden Cross 股票掃描
+st.subheader("📈 Golden Cross 股票掃描")
+with st.spinner("掃描中，請稍候..."):
+    gc_stocks = scan_golden_cross_stocks()
+if gc_stocks:
+    st.success("✅ 出現 Golden Cross 訊號的股票：")
+    st.table(gc_stocks)
+else:
+    st.warning("暫時未發現 Golden Cross 股票")
