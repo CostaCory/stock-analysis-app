@@ -49,6 +49,18 @@ if stock_symbol:
     st.subheader(f"{stock_symbol} 最近一年數據")
     st.dataframe(data.tail(5))
 
+    # RSI 圖表視覺化
+    st.subheader("📈 RSI 指標圖表")
+    fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
+    ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
+    ax_rsi.axhline(70, color='red', linestyle='--', label='超買區 (70)')
+    ax_rsi.axhline(30, color='green', linestyle='--', label='超賣區 (30)')
+    ax_rsi.set_title(f"{stock_symbol} RSI Indicator")
+    ax_rsi.set_ylabel("RSI")
+    ax_rsi.legend()
+    st.pyplot(fig_rsi)
+
+
     st.subheader(f"{stock_symbol} 股票價格走勢")
     fig, ax = plt.subplots()
     ax.plot(data.index, data['Close'], label='Close Price')
