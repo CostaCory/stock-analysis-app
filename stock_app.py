@@ -18,10 +18,11 @@ if stock_symbol:
     data['MA50'] = data['Close'].rolling(window=50).mean()
 
     # RSI 修正（先計算 RSI 數據）
-    close_price = data['Close']
-    if isinstance(close_price, pd.DataFrame):
-    close_price = close_price.iloc[:, 0]
-    data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
+ close_price = data['Close']
+if isinstance(close_price, pd.DataFrame):
+    close_price = close_price.iloc[:, 0]  # ← 要有縮排
+data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
+
 
 # 📉 RSI 圖表區塊（再畫圖）
     st.subheader(f"📉 {stock_symbol} RSI 指標圖表")
