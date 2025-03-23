@@ -105,13 +105,19 @@ if gc_stocks:
 else:
     st.warning("暫時未發現 Golden Cross 股票")
 
-# 預測下一日收盤價顯示（修正）
+# 🔮 AI 預測下一日收盤價顯示
 try:
     last_close = data['Close'].iloc[-1]
-    next_day_prediction = model.predict(np.array([[last_close]]))[0]
 
-    st.subheader("🔮 AI 預測下一日收盤價")
-    st.write(f"預測下一交易日收盤價：${round(next_day_prediction, 2)}")
+    # 檢查是否 NaN 或非數值
+    if pd.isna(last_close):
+        st.warning("⚠️ 無法預測下一日收盤價（收盤價為空值或無效）")
+    else:
+        # 預測下一日收盤價（注意輸入 shape 應為 (1, 1)）
+        next_day_prediction = model.predict(np.array([[last_close]]))[0]
+        st.subheader("🔮 AI 預測下一日收盤價")
+        st.write(f"預測下一交易日收盤價：${round(next_day_prediction, 2)}")
+
 except Exception as e:
     st.error("⚠️ 無法計算預測下一日收盤價。請確認資料是否完整。")
     st.exception(e)
