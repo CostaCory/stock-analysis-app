@@ -15,7 +15,8 @@ data['MA20'] = data['Close'].rolling(window=20).mean()
 data['MA50'] = data['Close'].rolling(window=50).mean()
 
 # 計算 RSI
-data['RSI'] = ta.momentum.RSIIndicator(data['Close']).rsi()
+close_series = data['Close'].squeeze()  # 確保係一維
+data['RSI'] = ta.momentum.RSIIndicator(close_series).rsi()
 
 # 判斷買賣訊號
 data['Signal'] = np.where(
