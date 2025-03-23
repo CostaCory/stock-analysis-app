@@ -17,11 +17,22 @@ if stock_symbol:
     data['MA20'] = data['Close'].rolling(window=20).mean()
     data['MA50'] = data['Close'].rolling(window=50).mean()
 
-    # RSI 修正
+    # RSI 修正（先計算 RSI 數據）
     close_price = data['Close']
     if isinstance(close_price, pd.DataFrame):
-        close_price = close_price.iloc[:, 0]
+    close_price = close_price.iloc[:, 0]
     data['RSI'] = ta.momentum.RSIIndicator(close=close_price, window=14).rsi()
+
+# 📉 RSI 圖表區塊（再畫圖）
+    st.subheader(f"📉 {stock_symbol} RSI 指標圖表")
+    fig_rsi, ax_rsi = plt.subplots(figsize=(10, 3))
+    ax_rsi.plot(data.index, data['RSI'], label='RSI', color='purple')
+    ax_rsi.axhline(70, color='red', linestyle='--', label='Overbought (70)')
+    ax_rsi.axhline(30, color='green', linestyle='--', label='Oversold (30)')
+    ax_rsi.set_title(f"{stock_symbol} RSI Indicator")
+    ax_rsi.set_ylabel("RSI")
+    ax_rsi.legend()
+    st.pyplot(fig_rsi)
 
     # MA 買入賣出訊號
     data['Signal'] = 0
